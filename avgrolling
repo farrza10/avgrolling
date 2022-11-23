@@ -1,0 +1,34 @@
+----------average transacitions amount for last month----------
+
+# Calculate the average amount per credit card for the past 30 days
+fraud_monthly_amt = fraud_df.groupby(cc_num)[amt].rolling("30D").mean().reset_index()
+
+# Rename the column
+fraud_monthly_amt.rename(columns={amt: "avg_30_day"}, inplace=True)
+
+# Merge in the new column by cc number and transaction time
+fraud_df = (
+    fraud_df.merge(fraud_monthly_amt, on=[cc_num, trans_time])
+    .set_index(trans_time)
+    .sort_index()
+)
+
+---------Number of transactions for the last month-----------
+
+fraud_monthly_qty = (
+    fraud_df.groupby([cc_num, merchant])[amt]
+    .rolling("30D")
+    .count()
+    .reset_index()
+    .drop(columns=merchant)
+)
+
+# Rename the column
+fraud_monthly_qty.rename(columns={amt: "merchant_qty_30_day"}, inplace=True)
+
+# Merge in the new column by cc number and transaction time
+fraud_df = (
+    fraud_df.merge(fraud_monthly_qty, on=[cc_num, trans_time])
+    .set_index(trans_time)
+    .sort_index()
+)
